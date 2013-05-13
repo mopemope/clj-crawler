@@ -18,11 +18,12 @@
    (fn [q] 
       (when-let [val (dequeue! q)]
         (try
-          (debug (format "start worker %s" val))
+          (debug (format "start call worker val:%s" val))
           (worker-fn val)
-          (debug (format "remain %s" (count @q)))
-          (Thread/sleep *sleep-time*)
+          (debug (format "end call worker val:%s remain:%s" val (count @q)))
           (catch Exception e (error e)))
+        (debug (format "wait:%s ... " *sleep-time*))
+        (Thread/sleep *sleep-time*)
         (recur q)))))
 
 (defn start-worker [q f nthread]
@@ -35,5 +36,3 @@
           (deliver p "OK"))))
     p))
 
-; (start-worker (atom (vec (range 10))) #(println %) 2)
-;

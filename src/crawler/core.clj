@@ -9,4 +9,7 @@
 
 (defn -main []
   (let [store store-info]
-    (start-crawl store 2)))
+    ; (store-bbs-info store {:url "http://anago.2ch.net/software/" :title "ソフトウェア"})
+    ; (start-crawl store 3)
+    (start-crawl-all store 3)))
+
