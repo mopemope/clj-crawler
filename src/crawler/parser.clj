@@ -1,10 +1,13 @@
 (ns crawler.parser
-    (import 
-      (java.util.regex Pattern)
-      (org.jsoup.nodes Element))
-    (:use 
-      [clojure.tools.logging]
-      [jsoup.soup]))
+  (import 
+   (java.util.regex Pattern)
+   (org.jsoup.nodes Element))
+  (:require
+   [taoensso.timbre :as timbre])
+  (:use 
+   [jsoup.soup]))
+
+(timbre/refer-timbre)
 
 (def ^:private bg20-url "http://bg20.2ch.net/test/r.so/")
 

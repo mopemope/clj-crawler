@@ -1,38 +1,50 @@
 (ns crawler.worker
-    (:use 
-      [clojure.tools.logging]))
+  (:require
+   [clojure.core.async :as async :refer [<! >! >!! <!! timeout chan alts! alts!! go sliding-buffer]]
+   [taoensso.timbre :as timbre]
+   ))
 
-(def ^:dynamic *sleep-time* 5000)
+(timbre/refer-timbre)
 
-(defn dequeue! [queue]
-  (loop []
-    (let [q @queue
-          value (first q)
-          nq (next q)]
-      (if (compare-and-set! queue q nq)
-        value
-        (recur)))))
+(def ^:dynamic *sleep-time* (* 1000 30))
 
-(defn- make-worker [f]
-  (let [worker-fn f]
-   (fn [q] 
-      (when-let [val (dequeue! q)]
+(defn run-worker [f c]
+  (go
+    (while true
+      (when-let [val (<! c)]
         (try
-          (debug (format "start call worker val:%s" val))
-          (worker-fn val)
-          (debug (format "end call worker val:%s remain:%s" val (count @q)))
-          (catch Exception e (error e)))
-        (debug (format "wait:%s ... " *sleep-time*))
-        (Thread/sleep *sleep-time*)
-        (recur q)))))
+          (debugf "start call worker val:%s" val)
+          (f val)
+          (debugf "end   call worker val:%s" val)
+          (debugf "wait:%s ... " *sleep-time*)
+          (alts! [(timeout *sleep-time*)])
+          (>! c val)
+          (catch Exception e
+            (do
+              (error e)
+              (>! c e))))))))
 
-(defn start-worker [q f nthread]
-  (let [p (promise)
-        cnt (atom nthread)]
-    (dotimes [i nthread]
-      (future 
-        ((make-worker f) q)
-        (if (= 0 (swap! cnt dec))
-          (deliver p "OK"))))
-    p))
+(defn- make-chan []
+  (chan (sliding-buffer 1)))
 
+(defn start-worker [queue fn nth]
+  (let [mainc (chan)
+        cs (vec (repeatedly nth make-chan))
+        queue (vec queue)]
+    (doseq [c cs]
+      (run-worker fn c))
+    (go
+      (loop [queue queue ccs cs]
+        (if-let [c (peek ccs)]
+            (when queue
+              (when-let [val (peek queue)]
+                (>! c val))
+              (recur (pop queue) (pop ccs)))
+            (do
+              (dotimes [i nth]
+                (let [[v c] (alts! cs)]
+                  (debugf "chan fin %s %s" v c)))
+              (recur queue cs))))
+      (>! mainc "FIN"))
+    (let [[v c] (alts!! [mainc])]
+      (debug v))))

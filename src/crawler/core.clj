@@ -4,12 +4,13 @@
     [crawler.datastore.datastore]))
 
 (def store-info 
-     (make-db-config 
-       { :host "localhost" :db "2ch" :user "2ch" :password "2ch"}))
+  (make-arango-config
+   {
+    :connection-url "http://localhost:8529/"
+    :db-name "ma2ch"
+    }))
 
 (defn -main []
   (let [store store-info]
-    ; (store-bbs-info store {:url "http://anago.2ch.net/software/" :title "ソフトウェア"})
-    ; (start-crawl store 3)
-    (start-crawl-all store 3)))
+    (start-crawl-all store 2)))
 

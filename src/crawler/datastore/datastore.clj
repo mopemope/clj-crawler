@@ -1,15 +1,15 @@
 (ns crawler.datastore.datastore
   (:require
-    [crawler.datastore.database :as db])
-  (:use 
-      [clojure.tools.logging]
-      [korma.core]
-      [korma.db]
-      [korma.config]))
+   [taoensso.timbre :as timbre]
+   [crawler.datastore.database :as db]
+   [crawler.datastore.arango :as arango]
+   ))
+
+(timbre/refer-timbre)
 
 (defprotocol Repository
 
-  (setup-store [datastore])
+  (setup-store [config])
   
   (get-bbs [datastore])
 
@@ -25,11 +25,11 @@
 
   Repository
   (setup-store [datastore]
-    (defdb db (postgres (:config datastore))))
+    (db/setup-db (:config datastore)))
   
   (get-bbs [datastore]
     (db/get-bbs))
-         
+  
   (store-bbs [datastore board-info]
     (db/store-bbs board-info))
 
@@ -42,7 +42,29 @@
   (store-thread-comments [datastore thread-info comment-info]
     (db/store-thread-comments thread-info comment-info)))
 
+(defrecord Arango [config]
+
+  Repository
+  (setup-store [datastore]
+    (arango/setup-db datastore))
+  
+  (get-bbs [datastore]
+    (arango/get-bbs))
+  
+  (store-bbs [datastore board-info]
+    (arango/store-bbs board-info))
+
+  (store-thread [datastore thread-info]
+    (arango/store-thread thread-info))
+  
+  (store-comments [datastore comment-info]
+    (arango/store-comments comment-info))
+
+  (store-thread-comments [datastore thread-info comment-info]
+    (arango/store-thread-comments thread-info comment-info)))
+
 (defn make-db-config [config]
   (Database. config))
-; (map #(println %) (.getInterfaces Database))
-; (setup-store (make-db-config {}))
+
+(defn make-arango-config [config]
+  (Arango. config))
