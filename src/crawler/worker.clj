@@ -36,15 +36,19 @@
     (go
       (loop [queue queue ccs cs]
         (if-let [c (peek ccs)]
+          (do 
+            (debugf "q:%s cs:%s" (count queue) (count ccs))
+            (if-let [val (peek queue)]
+              (do
+                (>! c val)
+                (recur (pop queue) (pop ccs)))
+              (recur queue [])))
+          (do
+            (dotimes [i nth]
+              (let [[v c] (alts! cs)]
+                (debugf "chan fin %s %s" v c)))
             (when queue
-              (when-let [val (peek queue)]
-                (>! c val))
-              (recur (pop queue) (pop ccs)))
-            (do
-              (dotimes [i nth]
-                (let [[v c] (alts! cs)]
-                  (debugf "chan fin %s %s" v c)))
-              (recur queue cs))))
+              (recur queue cs)))))
       (>! mainc "FIN"))
     (let [[v c] (alts!! [mainc])]
       (debug v))))
