@@ -5,6 +5,7 @@
    [clarango.database :as database]
    [clarango.document :as document]
    [clarango.collection :as collection]
+   [clarango.collection-ops :as collection-ops]
    [clarango.query :as query]
    [clarango.index :as index]))
 
@@ -51,12 +52,18 @@
   (clacore/with-collection "bbs"
    (query/execute "FOR b IN bbs RETURN b"))) 
 
-(defn- get-rescount [{url :url}]
-  (let [res (clacore/with-collection "threads"
-                 (query/execute "FOR t IN threads RETURN LENGTH(t) "))
+(defn- get-document [name key]
+  (try
+    (collection-ops/cla-get! name key)
+    (catch Exception e
+      {})))
+
+(defn- get-rescount [thread-info]
+  (let [key (get-thread-key thread-info)
+        res (get-document "threads" key)
         result (:result res)]
-    (if (and result (> result 0))
-      result
+    (if result
+      (:res-count (first result))
       0)))
 
 (defn store-thread [thread-info]
@@ -91,4 +98,5 @@
             (infof "stored:%s:%s" (:title thread-info) thread-info))
           (infof "進捗なし:%s" (:title thread-info))))
       (infof "進捗なし:%s" (:title thread-info)))))
+
 
