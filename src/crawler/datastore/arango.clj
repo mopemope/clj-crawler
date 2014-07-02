@@ -55,15 +55,13 @@
 (defn- get-document [name key]
   (try
     (collection-ops/cla-get! name key)
-    (catch Exception e
-      {})))
+    (catch Exception e)))
 
 (defn- get-rescount [thread-info]
   (let [key (get-thread-key thread-info)
-        res (get-document "threads" key)
-        result (:result res)]
-    (if result
-      (:res-count (first result))
+        res (get-document "threads" key)]
+    (if res
+      (:res-count res)
       0)))
 
 (defn store-thread [thread-info]
