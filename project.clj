@@ -7,6 +7,7 @@
                  [org.clojure/clojure "1.6.0"]
                  [clojure-soup "0.0.1"]
                  [org.clojure/core.async "0.1.303.0-886421-alpha"]
+                 [org.clojure/data.codec "0.1.0"]
                  [com.taoensso/timbre "3.2.1"]
                  [org.clojure/tools.cli "0.3.1"]
                  [clj-http "0.9.2"]

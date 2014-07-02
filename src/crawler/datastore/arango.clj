@@ -1,5 +1,6 @@
 (ns crawler.datastore.arango
   (:require
+   [crawler.attach :as attach]
    [taoensso.timbre :as timbre]
    [clarango.core :as clacore]
    [clarango.database :as database]
@@ -31,7 +32,11 @@
   (when-not (get-collection-info "comments")
     (collection/create "comments")
     (index/create
-     {:type "fulltext" :fields ["comment"]} "comments")))
+     {:type "fulltext" :fields ["comment"]} "comments"))
+  
+  (when-not (get-collection-info "attachments")
+    (collection/create "attachments")
+    ))
 
 (defn- get-thread-key [thread-info]
   (let [word (clojure.string/split (:url thread-info) #"/")
@@ -80,9 +85,18 @@
             (document/replace-by-key thread-info (get-thread-key thread-info))))))
     old-count))
 
+(defn store-attachment [comment type blob]
+  (collection-ops/cla-conj! "attachments"
+                            {
+                             :comment_key (get-comment-key comment)
+                             :type type
+                             :data blob
+                             }))
+
 (defn store-comments [datas]
   (doseq [data datas]
-;;    (debug data)
+    ;;    (debug data)
+    (attach/search-attachment data store-attachment)
     (clacore/with-collection "comments"
       (document/create-with-key data (get-comment-key data)))))
 
