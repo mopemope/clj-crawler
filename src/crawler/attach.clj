@@ -11,7 +11,7 @@
 
 (timbre/refer-timbre)
 
-(def ^:private cmt-re (Pattern/compile "([\\w-:/.]+\\.jpg)|([\\w:/.]+\\.jpeg)|([\\w:/.]*\\.png)|([\\w:/.]*imepita.jp/[\\w./]+)|([\\w:/.]*imepic.jp/[\\w./]+)|([\\w:/.]*i.imgur.com/[\\w./]+)" Pattern/DOTALL))
+(def ^:private cmt-re (Pattern/compile "([\\w-:/.%]+\\.jpg)|([\\w:/.%]+\\.jpeg)|([\\w:/.%]*\\.png)|([\\w:/.]*imepic.jp/[\\w./]+)|([\\w:/.]*i.imgur.com/[\\w./]+)" Pattern/DOTALL))
 
 (defn- base64-string [data]
   (String. (b64/encode data) "UTF-8"))
