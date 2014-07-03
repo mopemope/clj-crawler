@@ -30,8 +30,12 @@
 
 (defn- complement-url [^String url]
   (cond
-   (.startsWith url "http://") url
-   (.startsWith url "ttp://") (str "h" url)
+   (or
+     (.startsWith url "https://")
+     (.startsWith url "http://")) url
+   (or
+     (.startsWith url "ttps://")
+     (.startsWith url "ttp://")) (str "h" url)
    :else (str "http://" url)))
 
 (defn search-attachment [data store-fn]

@@ -1,54 +1,56 @@
 (ns crawler.worker
   (:require
-   [clojure.core.async :as async :refer [<! >! >!! <!! timeout chan alts! alts!! go sliding-buffer]]
+   [clojure.core.async :as async :refer [<! >! >!! <!! timeout chan alts! alts!! go go-loop sliding-buffer]]
    [taoensso.timbre :as timbre]
    ))
 
 (timbre/refer-timbre)
 
-(def ^:dynamic *sleep-time* (* 1000 30))
+(def ^:dynamic *sleep-time* (* 1000 25))
 
-(defn run-worker [f c]
+(def ^:private mark 'dummy)
+
+(defn run-worker [f cin cout]
   (go
     (while true
-      (when-let [val (<! c)]
+      (when-let [[data _] (alts! [cin])]
         (try
-          (debugf "start call worker val:%s" val)
-          (f val)
-          (debugf "end   call worker val:%s" val)
+          (debugf "start call worker val:%s" data)
+          (f data)
+          (debugf "end   call worker val:%s" data)
           (debugf "wait:%s ... " *sleep-time*)
           (alts! [(timeout *sleep-time*)])
-          (>! c val)
+          (>! cout data)
           (catch Exception e
             (do
               (error e)
-              (>! c e))))))))
+              (>! cout e))))))))
 
 (defn- make-chan []
-  (chan (sliding-buffer 1)))
+  [(chan 1) (chan 1)])
 
 (defn start-worker [queue fn nth]
   (let [mainc (chan)
-        cs (vec (repeatedly nth make-chan))
+        chans (vec (repeatedly nth make-chan))
         queue (vec queue)]
-    (doseq [c cs]
-      (run-worker fn c))
+    (doseq [[cin cout] chans]
+      (run-worker fn cin cout))
     (go
-      (loop [queue queue ccs cs]
-        (if-let [c (peek ccs)]
-          (do 
-            (debugf "q:%s cs:%s" (count queue) (count ccs))
-            (if-let [val (peek queue)]
-              (do
-                (>! c val)
-                (recur (pop queue) (pop ccs)))
-              (recur queue [])))
-          (do
-            (dotimes [i nth]
-              (let [[v c] (alts! cs)]
-                (debugf "chan fin %s %s" v c)))
-            (when queue
-              (recur queue cs)))))
+      (loop [q queue waiter [] cs chans]
+        (let [value (peek q)
+              [cin cout] (peek cs)]
+          (if (and value cin)
+            (do
+              (>! cin value)
+              (recur (pop q) (conj waiter cout) (pop cs)))
+            (let [len (count waiter)]
+              (when (> len 0)
+                (dotimes [n len]
+                  (let [[v _] (alts! waiter)]
+                    (debugf "fin %s" v)))
+                (when q
+                  (recur q [] chans)))))))
       (>! mainc "FIN"))
     (let [[v c] (alts!! [mainc])]
       (debug v))))
+
