@@ -73,6 +73,8 @@
       (debug *datastore*)
       (store/setup-store *datastore*)
       (debug "setup-store")
+      (doseq [b board-list]
+        (store/store-bbs *datastore* b))
       (start-worker q crawl-board n))))
 
 (defn start-crawl [store bbs-parallel] 
@@ -82,8 +84,9 @@
     (loop []
       (let [board-list (store/get-bbs *datastore*)
             q (shuffle board-list)]
-        (start-worker q crawl-board bbs-parallel)
-        ))))
+        (doseq [b board-list]
+          (store/store-bbs *datastore* b))
+        (start-worker q crawl-board bbs-parallel)))))
 
 (defn store-bbs-info [store bbs] 
   (binding [*datastore* store]

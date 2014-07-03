@@ -22,21 +22,36 @@
 
   ;; create collections
   (when-not (get-collection-info "bbs")
-    (collection/create "bbs"))
+    (collection/create "bbs")
+    (index/create
+     {:type "hash" :fields ["url"]} "bbs"))
 
   (when-not (get-collection-info "threads")
     (collection/create "threads")
     (index/create
-     {:type "fulltext" :fields ["title"]} "threads"))
+     {:type "fulltext" :fields ["title"]} "threads")
+    (index/create
+     {:type "hash" :fields ["board-url"]} "threads")
+    (index/create
+     {:type "hash" :fields ["url"]} "threads"))
   
   (when-not (get-collection-info "comments")
     (collection/create "comments")
     (index/create
-     {:type "fulltext" :fields ["comment"]} "comments"))
+     {:type "fulltext" :fields ["comment"]} "comments")
+    (index/create
+     {:type "hash" :fields ["url"]} "comments")
+    (index/create
+     {:type "hash" :fields ["board-url"]} "comments"))
   
   (when-not (get-collection-info "attachments")
     (collection/create "attachments")
     ))
+
+(defn- get-bbs-key [bbs-info]
+  (let [word (clojure.string/split (:url bbs-info) #"/")
+        id (last word)]
+    (str id)))
 
 (defn- get-thread-key [thread-info]
   (let [word (clojure.string/split (:url thread-info) #"/")
@@ -50,8 +65,13 @@
     (str nm "_"  id "_" no)))
 
 (defn store-bbs [data]
-  (clacore/with-collection "bbs"
-    (document/create-with-key data (:url data))))
+  (try
+    (if-let [key (get-bbs-key data)]
+     (do
+       (debugf "key:%s" key)
+       (clacore/with-collection "bbs"
+         (document/create-with-key data key))))
+    (catch Exception e)))
 
 (defn get-bbs []
   (clacore/with-collection "bbs"

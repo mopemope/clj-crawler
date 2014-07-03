@@ -12,5 +12,5 @@
 
 (defn -main []
   (let [store store-info]
-    (start-crawl-all store 2)))
+    (start-crawl-all store 8)))
 
