@@ -26,7 +26,8 @@
         (infof "start download from %s" url)
         [ct (base64-string (:body res))]))
     (catch Exception e
-      (error e ))))
+      ;;(error e )
+      )))
 
 (defn- complement-url [^String url]
   (cond

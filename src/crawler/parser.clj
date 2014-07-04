@@ -20,7 +20,7 @@
 
 (defn- get-thread-info [title]
   (let [[_ title res-count] (re-find (re-matcher title-re title))]
-    {:title title :res-count (parse-int res-count)}))
+    {:title title :res_count (parse-int res-count)}))
 
 (defn- format-url [root ^String href]
   (str root (subs href 0 (- (.length href) 3))))
@@ -58,7 +58,7 @@
       ($ (parse data) 
            "a[href$=50]" 
            (map #(assoc (get-thread-info (.text ^Element %)) 
-                        :board-url board-url 
+                        :board_url board-url 
                         :url (format-url base-url (.attr ^Element % "href"))))))))
 
 (defn- create-dat-info [thread-info]
@@ -68,7 +68,7 @@
     (fn [idx line] 
       (let [[hndl mailto date cmt] (clojure.string/split line #"<>")]
         {
-        :board-url board-url
+        :board_url board-url
         :title title 
         :url url 
         :no (inc idx) 

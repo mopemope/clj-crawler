@@ -31,7 +31,7 @@
     (index/create
      {:type "fulltext" :fields ["title"]} "threads")
     (index/create
-     {:type "hash" :fields ["board-url"]} "threads")
+     {:type "hash" :fields ["board_url"]} "threads")
     (index/create
      {:type "hash" :fields ["url"]} "threads"))
   
@@ -42,7 +42,7 @@
     (index/create
      {:type "hash" :fields ["url"]} "comments")
     (index/create
-     {:type "hash" :fields ["board-url"]} "comments"))
+     {:type "hash" :fields ["board_url"]} "comments"))
   
   (when-not (get-collection-info "attachments")
     (collection/create "attachments")
@@ -85,8 +85,9 @@
 (defn- get-rescount [thread-info]
   (let [key (get-thread-key thread-info)
         res (get-document "threads" key)]
+    ;;(debugf "res:%s" (get res "res-count"))
     (if res
-      (:res-count res)
+      (get res "res-count")
       0)))
 
 (defn store-thread [thread-info]
@@ -116,7 +117,7 @@
 (defn store-comments [datas]
   (doseq [data datas]
     ;;    (debug data)
-    (attach/search-attachment data store-attachment)
+    ;;(attach/search-attachment data store-attachment)
     (clacore/with-collection "comments"
       (document/create-with-key data (get-comment-key data)))))
 
