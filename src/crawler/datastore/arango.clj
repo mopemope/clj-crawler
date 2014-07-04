@@ -87,12 +87,12 @@
         res (get-document "threads" key)]
     ;;(debugf "res:%s" (get res "res-count"))
     (if res
-      (get res "res-count")
+      (get res "res_count")
       0)))
 
 (defn store-thread [thread-info]
   (let [old-count (get-rescount thread-info)
-        res-count (:res-count thread-info)]
+        res-count (:res_count thread-info)]
     (debug (format "store-thread thread-info:%s old-count:%s res-count:%s" thread-info old-count res-count))
     (if (> res-count old-count)
       (if (= old-count 0)

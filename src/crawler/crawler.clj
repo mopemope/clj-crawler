@@ -40,7 +40,7 @@
     (parse-thread-list board-url data)))
 
 (defn- get-thread-data [thread-info]
-  (let [url (get-dat-url (:board-url thread-info) (:url thread-info))]
+  (let [url (get-dat-url (:board_url thread-info) (:url thread-info))]
     (debugf "load dat from url:%s" url)
     (let [^String data (slurp url :encoding "MS932")]
      (if (= (.indexOf data "ERROR = 5656") -1)
